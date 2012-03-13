@@ -1,0 +1,33 @@
+INSTALLATIONSANLEITUNG
+
+1. Ubuntu / Linux
+
+Wechseln sie zuerst in das Verzeichnis ~/.blender/2.62/scripts/addons
+
+Möglicherweise bestehen die Unterverzeichnisse scripts/addons noch nicht. In diesem Fall
+legen sie sie einfach an. In dieses Verzeichnis kopieren sie folgendes Verzeichnis, das
+sie vorher mit git auschecken müssen:
+
+https://github.com/xml3d/Blender-Exporter/tree/master/org.xml3d.exporter.blender/src/2.62+/io_scene_xml3d
+
+Am Ende sollte die folgende Ordnerstruktur existieren:
+
+/home/<username>/.blender/<blenderversion>/scripts/addons/io_scene_xml3d
+	|- export_xml3d.py
+	|- __init__.py
+	|- xml3d.py
+
+Anschließen starten sie Blender neu oder drücken sie F8, damit die Skripte neu geladen werden.
+
+Wechseln sie in die "User Preferences"-Ansicht von Blender und wählen sie den Tab "Addons" an.
+Suchen sie in dem Suchfenster oben links nach "xml3d". Als Suchergebnis sollte folgendes erscheinen:
+
+	Import-Export: XML3D (.xhtml)
+	Description:	Export XML3D
+	Location:		File > Export > XML3D (.xhtml)
+	Author:			Nicolas Göddel
+	Version:		12.2
+	Internet:		
+
+An der rechten Seite befindet sich eine Checkbox, die aktiviert werden muss. Danach ist das
+Exporter-Plugin aktiviert und kann benutzt werden.
