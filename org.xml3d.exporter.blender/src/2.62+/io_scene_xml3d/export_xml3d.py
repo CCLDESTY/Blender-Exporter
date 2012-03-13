@@ -1,4 +1,20 @@
+# ##### BEGIN GPL LICENSE BLOCK #####
 #
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
 
 __author__ = ["Nicolas Göddel"]
 __version__ = '12.02'
@@ -10,8 +26,10 @@ import array
 from . import xml3d
 import sys
 import time
+import os
 #from Blender import Mesh, Window, Mathutils, Material #@UnresolvedImport
 import mathutils
+import bpy_extras.io_utils
 
 DEG2RAD = 0.017453292519943295
 RAD2DEG = 57.295779513082323
@@ -83,14 +101,14 @@ class XML3DExporterHelper :
     noMaterialAppeared = False
     doc = None
     
-    def __init__(self, filename, onlySelected, exportCameras, applyModifiers,
-                 useRelativePath, annotatePhysics, writeHTMLHeader, ignoreLamps,
+    def __init__(self, filepath, onlySelected, exportCameras, applyModifiers,
+                 pathMode, annotatePhysics, writeHTMLHeader, ignoreLamps,
                  useRaytracing, convertParenting) :
-        self.filename = filename
+        self.filepath = filepath
         self.onlySelected = onlySelected
         self.exportCameras = exportCameras
         self.applyModifiers = applyModifiers
-        self.useRelativePath = useRelativePath
+        self.pathMode = pathMode
         self.annotatePhysics = annotatePhysics
         self.writeHTMLHeader = writeHTMLHeader
         self.ignoreLamps = ignoreLamps
@@ -492,9 +510,13 @@ class XML3DExporterHelper :
                 print("WARNING: %s not supported as image source. Ignoring texture!" % (source))
                 continue
             
-            imageFileName = texture.texture.image.filepath
-            if self.useRelativePath :
-                imageFileName = bpy.path.relpath(imageFileName, bpy.path.basename(self.filename)).replace("//", "", 1)
+            imageFileName = bpy_extras.io_utils.path_reference(texture.texture.image.filepath,
+                                                               os.path.dirname(bpy.data.filepath),
+                                                               os.path.dirname(self.filepath),
+                                                               self.pathMode,
+                                                               "",
+                                                               self.copySet,
+                                                               texture.texture.image.library)
             
             textureElement = self.doc.createTextureElement(None, "diffuseTexture")
             img = self.doc.createImgElement(None, imageFileName)
@@ -673,13 +695,14 @@ class XML3DExporterHelper :
     def write(self) :
         self.doc = xml3d.XML3DDocument()
         self.scene = bpy.context.scene
+        self.copySet = set()
         
-        print('--> START: Exporting XML3D to %s' % self.filename)
+        print('--> START: Exporting XML3D to %s' % self.filepath)
         start_time = time.time()
         try:
-            out = open(self.filename, 'w')
+            out = open(self.filepath, 'w')
         except:
-            print('ERROR: Could not open %s' % self.filename)
+            print('ERROR: Could not open %s' % self.filepath)
             return False
       
         divElem = None
@@ -742,6 +765,9 @@ class XML3DExporterHelper :
         self.doc.writexml(out, "", "\t", "\n", "UTF-8")
     
         out.close()
+        
+        bpy_extras.io_utils.path_reference_copy(self.copySet)
+        
         print('--> END: Exporting XML3D. Duration: %.2f' % (time.time() - start_time))
         return
 
