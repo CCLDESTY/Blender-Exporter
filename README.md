@@ -3,9 +3,7 @@ XML3D exporter for Blender
 
 Version: DEV_VERSION
 
-This archive contains the XML3D exporter for Blender. It uses the API
-of Blender up to version 2.49. The new Blender Python API of 
-versions > 2.5 is not (yet) supported.
+This archive contains the XML3D exporter for Blender. 
 
 For more information on Blender visit: http://www.blender.org/
 For more information on XML3D visit: http://www.xml3d.org/
