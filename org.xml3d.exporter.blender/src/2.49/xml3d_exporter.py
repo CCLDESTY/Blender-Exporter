@@ -45,6 +45,7 @@ Notes: the script does not export animations yet.
 
 from xml3d import XML3DDocument
 import sys
+import re
 
 import Blender, bpy, BPyMesh #@UnresolvedImport
 from Blender import Mesh, Window, Mathutils, Material #@UnresolvedImport
@@ -115,6 +116,15 @@ def appendUnique(mlist, value):
     mlist[value] = index
     return index, True    
     
+def normalizeID(id):
+  normalizedId = "";
+  for c in id:
+    if not re.match("[a-zA-Z0-9_]", c):
+      normalizedId += "_" + str(ord(c)) + "_";
+    else:
+      normalizedId += c;
+  return id.replace(" ", "_");
+
 class xml3d_exporter:
     
     annotatePhysics = False
@@ -142,16 +152,16 @@ class xml3d_exporter:
         return containerMesh
     
     def writeMeshObject(self, obj, parent):
-        #print 'Writing: ' , obj.name
+        #print 'Writing: ' , normalizeID(obj.name)
         
         aMesh = obj.getData()
 
         group = self.doc.createGroupElement()
         parent.appendChild(group)
-        group.setTransform("#t_" + obj.name)
+        group.setTransform("#t_" + normalizeID(obj.name))
 
         if ( self.annotatePhysics ):
-            group.setAttribute("physics-material", "#phy_" + obj.name)
+            group.setAttribute("physics-material", "#phy_" + normalizeID(obj.name))
         
         matCount = len(aMesh.materials)
         if matCount < 2:
@@ -159,16 +169,16 @@ class xml3d_exporter:
             if matCount == 0:
                 group.setShader("#_no_mat")
             else:
-                group.setShader("#" + aMesh.materials[0].name)
-            mesh = self.doc.createMeshElement(None, None, "triangles", "#" + aMesh.name + "_data")
+                group.setShader("#" + normalizeID(aMesh.materials[0].name))
+            mesh = self.doc.createMeshElement(None, None, "triangles", "#" + normalizeID(aMesh.name) + "_data")
             group.appendChild(mesh)
         else:
             for material in aMesh.materials:
-                shaderName = "#" + material.name
+                shaderName = "#" + normalizeID(material.name)
                 subgroup = self.doc.createGroupElement(shader_ = shaderName)
                 group.appendChild(subgroup)
                 mesh = self.doc.createMeshElement(type_ = "triangles")
-                mesh.setSrc("#" + aMesh.name + "_data_" + material.name)
+                mesh.setSrc("#" + normalizeID(aMesh.name) + "_data_" + normalizeID(material.name))
                 subgroup.appendChild(mesh)
             
         
@@ -181,7 +191,7 @@ class xml3d_exporter:
         if len(aMesh.faces) == 0:
             return
         
-        print("Writing mesh %s" % mesh.name)
+        print("Writing mesh %s" % normalizeID(mesh.name))
         
         materials = aMesh.materials
         
@@ -203,7 +213,7 @@ class xml3d_exporter:
             
             Mesh.Mode(oldmode)
         
-        data = self.doc.createDataElement(mesh.name+"_data", None, None, None, None)    
+        data = self.doc.createDataElement(normalizeID(mesh.name)+"_data", None, None, None, None)
         parent.appendChild(data)
         
         # Mesh indices
@@ -280,10 +290,10 @@ class xml3d_exporter:
                 if len(indices[i]) == 0:
                     continue
                 
-                data = self.doc.createDataElement(mesh.name+"_data_" + material.name, None, None, None, None)    
+                data = self.doc.createDataElement(normalizeID(mesh.name)+"_data_" + material.name, None, None, None, None)
                 parent.appendChild(data)
 
-                refdata = self.doc.createDataElement(src_="#"+mesh.name+"_data")
+                refdata = self.doc.createDataElement(src_="#"+normalizeID(mesh.name)+"_data")
                 data.appendChild(refdata)
 
                 valueElement = self.doc.createIntElement(None, "index")
@@ -341,7 +351,7 @@ class xml3d_exporter:
         axis = quat.axis
         angle =  quat.angle * DEG2RAD
         
-        transform = self.doc.createTransformElement("t_" + obj.name)
+        transform = self.doc.createTransformElement("t_" + normalizeID(obj.name))
         transform.setTranslation("%.6f %.6f %.6f" % (obj.LocX, obj.LocY, obj.LocZ))
         transform.setScale("%.6f %.6f %.6f" % (obj.SizeX, obj.SizeY, obj.SizeZ))
         transform.setRotation("%.6f %.6f %.6f %.6f" % (axis.x, axis.y, axis.z, angle))
@@ -350,7 +360,7 @@ class xml3d_exporter:
     def writePhysicsMaterial(self, parent, mesh):
         
         mat = self.doc.createElement("physics:material")
-        mat.setAttribute("id", "phy_" + mesh.name)
+        mat.setAttribute("id", "phy_" + normalizeID(mesh.name))
         parent.appendChild(mat)        
         
         # Set the actor type
@@ -379,7 +389,7 @@ class xml3d_exporter:
         # TODO: Spot Light, Directional Light
         # Blender LAMP type --> XML3D "urn:xml3d:lightshader:point"      
         if ( light.type == Blender.Lamp.Types.Lamp ):                  
-            lightShaderElement = self.doc.createLightshaderElement("ls_" + light.name, "urn:xml3d:lightshader:point")
+            lightShaderElement = self.doc.createLightshaderElement("ls_" + normalizeID(light.name), "urn:xml3d:lightshader:point")
             parent.appendChild(lightShaderElement)
         
             mode = light.mode
@@ -428,7 +438,7 @@ class xml3d_exporter:
         
     def writePhongShader(self, parent, material):
         doc = self.doc
-        shaderElement = doc.createShaderElement(material.name, "urn:xml3d:shader:phong");
+        shaderElement = doc.createShaderElement(normalizeID(material.name), "urn:xml3d:shader:phong");
         parent.appendChild(shaderElement)
         
         world = Blender.World.GetCurrent()
@@ -534,7 +544,7 @@ class xml3d_exporter:
       
     def writeLight(self, obj, parent):
         group = self.doc.createGroupElement()
-        group.setTransform("#t_%s" % obj.name)
+        group.setTransform("#t_%s" % normalizeID(obj.name))
         parent.appendChild(group)
         
         
@@ -560,7 +570,7 @@ class xml3d_exporter:
         else:
             for obj in bpy.data.objects:
                 if (obj.getType() == 'Camera'):
-                    view = self.doc.createViewElement(obj.name);
+                    view = self.doc.createViewElement(normalizeID(obj.name));
                     view.setPosition("%.6f %.6f %.6f" % (obj.LocX, obj.LocY, obj.LocZ))
                     quat = obj.mat.rotationPart().toQuat()
                     rot = quat.axis
@@ -591,7 +601,7 @@ class xml3d_exporter:
         
         view = "#defaultView"
         if scene.objects.camera:
-            view = "#"+scene.objects.camera.name
+            view = "#"+normalizeID(scene.objects.camera.name)
         
         xml3dElem = self.doc.createXml3dElement(activeView_ = view)
         xml3dElem.setAttribute("xmlns", "http://www.xml3d.org/2009/xml3d")
