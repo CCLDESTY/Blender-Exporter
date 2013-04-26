@@ -458,7 +458,7 @@ class xml3d_exporter:
                 continue
             if mtex.texco == Blender.Texture.TexCo.UV and mtex.mapto == Blender.Texture.MapTo.COL:
                 if mtex.tex.type == Blender.Texture.Types.IMAGE:
-                    texture = doc.createTextureElement(None, "diffuseTexture")
+                    texture = doc.createTextureElement(None, "diffuseTexture", wrapS_ = "repeat", wrapT_ = "repeat")
                     img = doc.createImgElement(None, Blender.sys.basename(mtex.tex.image.filename))
                     texture.appendChild(img)
                     shaderElement.appendChild(texture)
