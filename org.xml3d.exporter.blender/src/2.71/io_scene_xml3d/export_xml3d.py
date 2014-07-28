@@ -145,7 +145,7 @@ class XML3DExporterHelper :
         return group
             
     def writeMeshData(self, parent, mesh, meshName = None) :
-        if len(mesh.faces) == 0 :
+        if len(mesh.polygons) == 0 :
             return
         
         if not meshName :
@@ -169,7 +169,7 @@ class XML3DExporterHelper :
         # Stellt sicher, dass keine Vertices doppelt aufgenommen werden
         vertex_dict = {}
        
-        print("Faces: %i" % len(mesh.faces))
+        print("Faces: %i" % len(mesh.polygons))
         
         uvTexture = mesh.uv_textures.active
         if uvTexture :
@@ -180,7 +180,7 @@ class XML3DExporterHelper :
         #    meshTextureFaceLayerData = mesh.tessface_uv_textures.active.data
         
         i = 0
-        for faceIndex, face in enumerate(mesh.faces) :
+        for faceIndex, face in enumerate(mesh.polygons) :
             mv = None
             uvFace = None
             if uvTexture and uvTexture.data[faceIndex] :
